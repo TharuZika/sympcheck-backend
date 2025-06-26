@@ -1,6 +1,7 @@
 // src/index.ts
 import express, { Application, RequestHandler } from 'express'
 import cors from 'cors'
+import symptomsRoutes from './routes/symptomsRoutes'
 
 const app: Application = express()
 app.use(cors())
@@ -18,6 +19,8 @@ const apiv1Handler: RequestHandler = (req, res) => {
 
 app.get('/', homeHandler)
 app.get('/api/v1', apiv1Handler)
+
+app.use('/api/v1/symptoms', symptomsRoutes)
 
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack)
