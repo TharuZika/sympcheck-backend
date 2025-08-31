@@ -1,13 +1,18 @@
-// src/index.ts
+import dotenv from 'dotenv'
 import express, { Application, RequestHandler } from 'express'
 import cors from 'cors'
 import symptomsRoutes from './routes/symptomsRoutes'
+import authRoutes from './routes/authRoutes'
+import historyRoutes from './routes/historyRoutes'
+import { initializeDatabase } from './models'
+
+dotenv.config()
 
 const app: Application = express()
 app.use(cors())
 app.use(express.json())
 
-// routes
+initializeDatabase().catch(console.error)
 
 const homeHandler: RequestHandler = (req, res) => {
   res.send('SympCheck Backend is up!')
@@ -21,6 +26,8 @@ app.get('/', homeHandler)
 app.get('/api/v1', apiv1Handler)
 
 app.use('/api/v1/symptoms', symptomsRoutes)
+app.use('/api/v1/auth', authRoutes)
+app.use('/api/v1/history', historyRoutes)
 
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error(err.stack)
