@@ -1,45 +1,18 @@
-import { DataTypes, Model, Optional } from 'sequelize';
-import sequelize from '../config/database';
-import User from './User';
+import { Sequelize, DataTypes } from 'sequelize';
 
-interface SymptomHistoryAttributes {
-  id: number;
-  userId: number;
-  originalInput: string;
-  processedSymptoms: string[];
-  predictions: any;
-  age?: string;
-  timestamp: Date;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-interface SymptomHistoryCreationAttributes extends Optional<SymptomHistoryAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
-
-class SymptomHistory extends Model<SymptomHistoryAttributes, SymptomHistoryCreationAttributes> implements SymptomHistoryAttributes {
-  public id!: number;
-  public userId!: number;
-  public originalInput!: string;
-  public processedSymptoms!: string[];
-  public predictions!: any;
-  public age?: string;
-  public timestamp!: Date;
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
-}
-
-SymptomHistory.init(
-  {
+export default function(sequelize: Sequelize, DataTypes: any) {
+  var SymptomHistory = sequelize.define('SymptomHistory', {
     id: {
-      type: DataTypes.INTEGER,
       autoIncrement: true,
+      type: DataTypes.INTEGER,
+      allowNull: false,
       primaryKey: true,
     },
     userId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: User,
+        model: 'users',
         key: 'id',
       },
     },
@@ -53,7 +26,7 @@ SymptomHistory.init(
     },
     predictions: {
       type: DataTypes.JSON,
-      allowNull: false,
+      allowNull: true,
     },
     age: {
       type: DataTypes.STRING,
@@ -63,16 +36,39 @@ SymptomHistory.init(
       type: DataTypes.DATE,
       allowNull: false,
     },
-  },
-  {
-    sequelize,
-    modelName: 'SymptomHistory',
-    tableName: 'symptom_histories',
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+  }, {
+    tableName: "symptom_histories",
     timestamps: true,
-  }
-);
+    indexes: [
+      {
+        name: "PRIMARY",
+        unique: true,
+        using: "BTREE",
+        fields: [{ name: "id" }],
+      },
+      {
+        name: "idx_user_id",
+        using: "BTREE",
+        fields: [{ name: "userId" }],
+      },
+    ],
+  } as any);
 
-User.hasMany(SymptomHistory, { foreignKey: 'userId', as: 'symptomHistories' });
-SymptomHistory.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+  (SymptomHistory as any).getHistoryByUserId = async (userId: number) => {
+    const historyData = await SymptomHistory.findAll({
+      where: { userId: userId },
+      order: [['timestamp', 'DESC']],
+    });
+    return historyData;
+  };
 
-export default SymptomHistory;
+  return SymptomHistory;
+}

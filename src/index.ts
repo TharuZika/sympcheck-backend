@@ -4,7 +4,7 @@ import cors from 'cors'
 import symptomsRoutes from './routes/symptomsRoutes'
 import authRoutes from './routes/authRoutes'
 import historyRoutes from './routes/historyRoutes'
-import { initializeDatabase } from './models'
+const { initializeDatabase } = require('./models')
 
 dotenv.config()
 

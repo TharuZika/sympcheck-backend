@@ -6,6 +6,6 @@ const router = Router();
 const symptomsController = new SymptomsController();
 
 router.post('/analyze', optionalAuth, symptomsController.analyzeSymptoms);
-router.post('/parse', symptomsController.parseSymptoms);
+router.post('/parse', optionalAuth, symptomsController.parseSymptoms);
 
 export default router; 

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { SymptomHistory, User } from '../models';
+const { SymptomHistory, User } = require('../models');
 import { Op } from 'sequelize';
 
 export class HistoryController {
@@ -182,7 +182,7 @@ export class HistoryController {
       const diseaseFrequency: { [key: string]: number } = {};
       const monthlyData: { [key: string]: number } = {};
 
-      history.forEach(item => {
+      history.forEach((item: any) => {
         item.processedSymptoms.forEach((symptom: string) => {
           symptomFrequency[symptom] = (symptomFrequency[symptom] || 0) + 1;
         });

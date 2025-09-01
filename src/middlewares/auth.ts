@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, JwtPayload } from '../utils/jwt';
-import { User } from '../models';
+const { User } = require('../models');
 
 declare global {
   namespace Express {

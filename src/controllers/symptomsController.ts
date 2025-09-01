@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { SymptomsService } from '../services/symptomsService';
 import { SymptomParserService } from '../services/symptomParserService';
-import { SymptomHistory } from '../models';
+const { SymptomHistory } = require('../models');
 
 export class SymptomsController {
   private symptomsService: SymptomsService;
@@ -85,9 +85,9 @@ export class SymptomsController {
             age: age ? age.toString() : undefined,
             timestamp: new Date()
           });
-          console.log('✅ Symptom analysis saved to history for user:', req.user.id);
+          console.log('Symptom analysis saved to history for user:', req.user.id);
         } catch (historyError) {
-          console.error('❌ Failed to save to history:', historyError);
+          console.error('Failed to save to history:', historyError);
           // Don't fail the request if history saving fails
         }
       }
@@ -138,9 +138,9 @@ export class SymptomsController {
             age: req.user.age ? req.user.age.toString() : undefined,
             timestamp: new Date()
           });
-          console.log('✅ Symptom parsing saved to history for user:', req.user.id);
+          console.log('Symptom parsing saved to history for user:', req.user.id);
         } catch (historyError) {
-          console.error('❌ Failed to save parsing to history:', historyError);
+          console.error('Failed to save parsing to history:', historyError);
           // Don't fail the request if history saving fails
         }
       }

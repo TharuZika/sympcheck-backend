@@ -1,29 +1,112 @@
-import sequelize from '../config/database';
-import User from './User';
-import SymptomHistory from './SymptomHistory';
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/database.js');
 
-export { User, SymptomHistory };
+const User = sequelize.define('User', {
+  id: {
+    autoIncrement: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  email: {
+    type: DataTypes.STRING(250),
+    allowNull: false,
+    unique: true,
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  age: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
+  avatar: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+}, {
+  tableName: "users",
+  timestamps: true,
+});
 
+const SymptomHistory = sequelize.define('SymptomHistory', {
+  id: {
+    autoIncrement: true,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    primaryKey: true,
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id',
+    },
+  },
+  originalInput: {
+    type: DataTypes.TEXT,
+    allowNull: false,
+  },
+  processedSymptoms: {
+    type: DataTypes.JSON,
+    allowNull: false,
+  },
+  predictions: {
+    type: DataTypes.JSON,
+    allowNull: true,
+  },
+  age: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
+  timestamp: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+}, {
+  tableName: "symptom_histories",
+  timestamps: true,
+});
 
-export default sequelize;
+User.hasMany(SymptomHistory, { foreignKey: 'userId', as: 'symptomHistories' });
+SymptomHistory.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-export const initializeDatabase = async () => {
+var bcrypt = require('bcryptjs');
+
+User.beforeCreate(async (user: any) => {
+  if (user.password) {
+    user.password = await bcrypt.hash(user.password, 12);
+  }
+});
+
+User.beforeUpdate(async (user: any) => {
+  if (user.changed('password')) {
+    user.password = await bcrypt.hash(user.password, 12);
+  }
+});
+
+(User as any).prototype.checkPassword = async function(password: string) {
+  return bcrypt.compare(password, (this as any).password);
+};
+
+const initializeDatabase = async () => {
   try {
     await sequelize.authenticate();
-    console.log('✅ Database connection has been established successfully.');
+    console.log('Database connection has been established successfully.');
     
     if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Development mode: You can run migrations with: npm run db:migrate');
-      console.log('📊 Creating database tables if they don\'t exist...');
-      
       await sequelize.sync({ alter: true });
-      console.log('✅ Database tables are ready!');
     }
   } catch (error) {
-    console.error('❌ Unable to connect to the database:', error);
-    console.log('💡 Please check your database configuration in .env file');
-    console.log('💡 Make sure MySQL is running and accessible');
-    console.log('💡 Continuing without database connection for now...');
-
+    console.error('Unable to connect to the database:', error);
+    throw error;
   }
 };
+
+module.exports = { User, SymptomHistory, sequelize, initializeDatabase };

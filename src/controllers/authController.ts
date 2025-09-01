@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { User } from '../models';
+const { User } = require('../models');
 import { generateToken } from '../utils/jwt';
 
 export class AuthController {
