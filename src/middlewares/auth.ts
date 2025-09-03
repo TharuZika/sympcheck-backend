@@ -80,9 +80,6 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
   }
 };
 
-/**
- * Password utility functions for handling password hashing and verification
- */
 export const hashPassword = async (password: string): Promise<string> => {
   return bcrypt.hash(password, 12);
 };
