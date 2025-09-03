@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 const { User } = require('../models');
 import { generateToken } from '../utils/jwt';
-import { verifyUserPassword } from '../middlewares/auth';
+import { verifyUserPassword, hashPassword } from '../middlewares/auth';
 
 export class AuthController {
   public register = async (req: Request, res: Response): Promise<void> => {
@@ -43,9 +43,11 @@ export class AuthController {
         }
       }
 
+      const hashedPassword = await hashPassword(password);
+
       const user = await User.create({
         email,
-        password,
+        password: hashedPassword,
         name,
         age: calculatedAge,
         birthday: birthday || null,
