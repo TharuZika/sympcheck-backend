@@ -5,7 +5,7 @@ import { generateToken } from '../utils/jwt';
 export class AuthController {
   public register = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { email, password, name, age } = req.body;
+      const { email, password, name, age, birthday, weight, height } = req.body;
 
       if (!email || !password) {
         res.status(400).json({
@@ -24,11 +24,33 @@ export class AuthController {
         return;
       }
 
+      let bmi = null;
+      if (weight && height) {
+        const weightKg = parseFloat(weight);
+        const heightM = parseFloat(height) / 100; // cm to m
+        bmi = weightKg / (heightM * heightM);
+      }
+
+      let calculatedAge = age ? parseInt(age) : undefined;
+      if (birthday && !age) {
+        const birthDate = new Date(birthday);
+        const today = new Date();
+        calculatedAge = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          calculatedAge--;
+        }
+      }
+
       const user = await User.create({
         email,
         password,
         name,
-        age: age ? parseInt(age) : undefined
+        age: calculatedAge,
+        birthday: birthday || null,
+        weight: weight ? parseFloat(weight) : null,
+        height: height ? parseFloat(height) : null,
+        bmi: bmi ? parseFloat(bmi.toFixed(2)) : null
       });
 
       const token = generateToken({
@@ -44,7 +66,11 @@ export class AuthController {
             id: user.id,
             email: user.email,
             name: user.name,
-            age: user.age
+            age: user.age,
+            birthday: user.birthday,
+            weight: user.weight,
+            height: user.height,
+            bmi: user.bmi
           },
           token
         }
@@ -103,7 +129,11 @@ export class AuthController {
             id: user.id,
             email: user.email,
             name: user.name,
-            age: user.age
+            age: user.age,
+            birthday: user.birthday,
+            weight: user.weight,
+            height: user.height,
+            bmi: user.bmi
           },
           token
         }
@@ -146,6 +176,10 @@ export class AuthController {
             email: user.email,
             name: user.name,
             age: user.age,
+            birthday: user.birthday,
+            weight: user.weight,
+            height: user.height,
+            bmi: user.bmi,
             createdAt: user.createdAt
           }
         }
@@ -171,7 +205,7 @@ export class AuthController {
         return;
       }
 
-      const { name, age } = req.body;
+      const { name, age, birthday, weight, height } = req.body;
       
       const user = await User.findByPk(req.user.id);
       if (!user) {
@@ -182,9 +216,34 @@ export class AuthController {
         return;
       }
 
+      let bmi = user.bmi;
+      const newWeight = weight !== undefined ? parseFloat(weight) : user.weight;
+      const newHeight = height !== undefined ? parseFloat(height) : user.height;
+      
+      if (newWeight && newHeight) {
+        const weightKg = newWeight;
+        const heightM = newHeight / 100; // cm to m
+        bmi = weightKg / (heightM * heightM);
+      }
+
+      let calculatedAge = age !== undefined ? parseInt(age) : user.age;
+      if (birthday && !age) {
+        const birthDate = new Date(birthday);
+        const today = new Date();
+        calculatedAge = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          calculatedAge--;
+        }
+      }
+
       await user.update({
         name: name !== undefined ? name : user.name,
-        age: age !== undefined ? parseInt(age) : user.age
+        age: calculatedAge,
+        birthday: birthday !== undefined ? birthday : user.birthday,
+        weight: newWeight,
+        height: newHeight,
+        bmi: bmi ? parseFloat(bmi.toFixed(2)) : null
       });
 
       res.status(200).json({
@@ -195,7 +254,11 @@ export class AuthController {
             id: user.id,
             email: user.email,
             name: user.name,
-            age: user.age
+            age: user.age,
+            birthday: user.birthday,
+            weight: user.weight,
+            height: user.height,
+            bmi: user.bmi
           }
         }
       });

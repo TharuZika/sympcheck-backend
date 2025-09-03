@@ -27,6 +27,22 @@ export default function(sequelize: Sequelize, DataTypes: any) {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    birthday: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    weight: {
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: true,
+    },
+    height: {
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: true,
+    },
+    bmi: {
+      type: DataTypes.DECIMAL(5, 2),
+      allowNull: true,
+    },
     avatar: {
       type: DataTypes.STRING,
       allowNull: true,

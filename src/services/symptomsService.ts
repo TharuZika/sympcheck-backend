@@ -69,7 +69,7 @@ export class SymptomsService {
         throw new Error(`ML Model Error: ${mlPredictions.error || 'No predictions returned'}`);
       }
 
-      console.log('Step 2: Enhancing predictions with Gemini AI...');
+      console.log('Enhancing predictions with Gemini AI...');
       
       const enhancedPredictions = await this.enhanceWithGemini(
         mlPredictions.predictions, 
@@ -132,7 +132,9 @@ export class SymptomsService {
   ): Promise<EnhancedPrediction[]> {
     const enhancedPredictions: EnhancedPrediction[] = [];
     
-    for (const prediction of predictions) {
+    const topPredictions = predictions.slice(0, 3);
+    
+    for (const prediction of topPredictions) {
       try {
         console.log(`Generating medical advice for ${prediction.disease}...`);
         const medicalAdvice = await this.generateMedicalAdvice(
