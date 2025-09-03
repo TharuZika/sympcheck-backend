@@ -1,4 +1,5 @@
 const { DataTypes } = require('sequelize');
+// @ts-ignore
 const sequelize = require('../config/database.js');
 
 const User = sequelize.define('User', {
@@ -77,23 +78,6 @@ const SymptomHistory = sequelize.define('SymptomHistory', {
 User.hasMany(SymptomHistory, { foreignKey: 'userId', as: 'symptomHistories' });
 SymptomHistory.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
-var bcrypt = require('bcryptjs');
-
-User.beforeCreate(async (user: any) => {
-  if (user.password) {
-    user.password = await bcrypt.hash(user.password, 12);
-  }
-});
-
-User.beforeUpdate(async (user: any) => {
-  if (user.changed('password')) {
-    user.password = await bcrypt.hash(user.password, 12);
-  }
-});
-
-(User as any).prototype.checkPassword = async function(password: string) {
-  return bcrypt.compare(password, (this as any).password);
-};
 
 const initializeDatabase = async () => {
   try {

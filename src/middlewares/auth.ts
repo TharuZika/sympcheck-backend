@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, JwtPayload } from '../utils/jwt';
+import bcrypt from 'bcryptjs';
 const { User } = require('../models');
 
 declare global {
@@ -77,4 +78,19 @@ export const optionalAuth = async (req: Request, res: Response, next: NextFuncti
   } catch (error) {
     next();
   }
+};
+
+/**
+ * Password utility functions for handling password hashing and verification
+ */
+export const hashPassword = async (password: string): Promise<string> => {
+  return bcrypt.hash(password, 12);
+};
+
+export const checkPassword = async (password: string, hashedPassword: string): Promise<boolean> => {
+  return bcrypt.compare(password, hashedPassword);
+};
+
+export const verifyUserPassword = async (user: any, password: string): Promise<boolean> => {
+  return bcrypt.compare(password, user.password);
 };

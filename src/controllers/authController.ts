@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 const { User } = require('../models');
 import { generateToken } from '../utils/jwt';
+import { verifyUserPassword } from '../middlewares/auth';
 
 export class AuthController {
   public register = async (req: Request, res: Response): Promise<void> => {
@@ -107,7 +108,7 @@ export class AuthController {
         return;
       }
 
-      const isPasswordValid = await user.checkPassword(password);
+      const isPasswordValid = await verifyUserPassword(user, password);
       if (!isPasswordValid) {
         res.status(401).json({
           status: 'error',

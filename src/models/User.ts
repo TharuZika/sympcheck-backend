@@ -1,5 +1,5 @@
 import { Sequelize, DataTypes } from 'sequelize';
-import bcrypt from 'bcryptjs';
+import { hashPassword } from '../middlewares/auth';
 
 export default function(sequelize: Sequelize, DataTypes: any) {
   
@@ -69,24 +69,18 @@ export default function(sequelize: Sequelize, DataTypes: any) {
     hooks: {
       beforeCreate: async (user: any) => {
         if (user.password) {
-          user.password = await bcrypt.hash(user.password, 12);
+          user.password = await hashPassword(user.password);
         }
       },
       beforeUpdate: async (user: any) => {
         if (user.changed('password')) {
-          user.password = await bcrypt.hash(user.password, 12);
+          user.password = await hashPassword(user.password);
         }
       },
     },
   } as any);
 
-  (User as any).prototype.checkPassword = async function(password: string) {
-    return bcrypt.compare(password, (this as any).password);
-  };
 
-  (User as any).hashPassword = async (password: string) => {
-    return bcrypt.hash(password, 12);
-  };
 
   (User as any).getUserById = async (userId: number) => {
     const userData = await User.findOne({
