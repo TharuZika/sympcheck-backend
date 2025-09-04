@@ -15,8 +15,7 @@ export class SymptomsController {
   public analyzeSymptoms = async (req: Request, res: Response): Promise<void> => {
     try {
       const { symptomps, sympList, age } = req.body;
-
-      // Validate required fields
+      
       if (!symptomps && !sympList) {
         res.status(400).json({
           status: 'error',
@@ -30,13 +29,11 @@ export class SymptomsController {
       let parseWarnings: string[] = [];
 
       if (sympList && Array.isArray(sympList) && sympList.length > 0) {
-        // Use sympList if provided (already parsed)
         processedSymptoms = sympList.map((symptom: string) => 
           symptom.trim().toLowerCase().replace(/\s+/g, '_')
         );
         originalInput = sympList.join(', ');
       } else if (symptomps && typeof symptomps === 'string') {
-        // Use Gemini to parse natural language symptoms
         console.log('Parsing symptoms with Gemini:', symptomps);
         const parseResult = await this.symptomParserService.parseSymptoms(symptomps);
         
@@ -66,15 +63,13 @@ export class SymptomsController {
       }
 
       console.log('Processing symptoms:', processedSymptoms);
-
-      // Call the updated service with processed symptoms
+      
       const result = await this.symptomsService.analyzeSymptoms({
         symptoms: processedSymptoms,
         originalInput,
         age: age ? age.toString() : undefined
       });
-
-      // Save to history if user is logged in
+      
       if (req.user) {
         try {
           await SymptomHistory.create({
@@ -87,8 +82,7 @@ export class SymptomsController {
           });
           console.log('Symptom analysis saved to history for user:', req.user.id);
         } catch (historyError) {
-          console.error('Failed to save to history:', historyError);
-          // Don't fail the request if history saving fails
+          console.error('Failed to save to history:', historyError); 
         }
       }
 
@@ -112,7 +106,7 @@ export class SymptomsController {
     }
   };
 
-  // New endpoint for parsing symptoms only
+  
   public parseSymptoms = async (req: Request, res: Response): Promise<void> => {
     try {
       const { input } = req.body;
@@ -126,22 +120,20 @@ export class SymptomsController {
       }
 
       const parseResult = await this.symptomParserService.parseSymptoms(input);
-
-      // Save to history if user is logged in
+     
       if (req.user) {
         try {
           await SymptomHistory.create({
             userId: req.user.id,
             originalInput: input,
             processedSymptoms: parseResult.symptoms,
-            predictions: null, // No predictions for parse-only endpoint
+            predictions: null, 
             age: req.user.age ? req.user.age.toString() : undefined,
             timestamp: new Date()
           });
           console.log('Symptom parsing saved to history for user:', req.user.id);
         } catch (historyError) {
           console.error('Failed to save parsing to history:', historyError);
-          // Don't fail the request if history saving fails
         }
       }
 
