@@ -40,9 +40,10 @@ export class SymptomsController {
         if (!parseResult.isValid || parseResult.symptoms.length === 0) {
           res.status(400).json({
             status: 'error',
-            message: 'No valid symptoms found in your input',
+            message: parseResult.error || 'No valid symptoms found in your input',
             warnings: parseResult.warnings,
-            originalInput: symptomps
+            originalInput: symptomps,
+            error: parseResult.error
           });
           return;
         }
@@ -120,6 +121,16 @@ export class SymptomsController {
       }
 
       const parseResult = await this.symptomParserService.parseSymptoms(input);
+      
+      if (parseResult.error) {
+        res.status(400).json({
+          status: 'error',
+          message: parseResult.error,
+          data: parseResult,
+          originalInput: input
+        });
+        return;
+      }
      
       if (req.user) {
         try {

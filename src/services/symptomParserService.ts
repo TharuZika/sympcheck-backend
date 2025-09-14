@@ -8,6 +8,7 @@ interface SymptomParseResult {
   isValid: boolean;
   warnings: string[];
   originalInput: string;
+  error?: string;
 }
 
 export class SymptomParserService {
@@ -26,6 +27,7 @@ export class SymptomParserService {
       const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       
       const prompt = `
+
       You are a medical symptom parser. Your task is to extract individual symptoms from natural language input and validate if they are medical symptoms.
 
       Input: "${input}"
@@ -35,6 +37,7 @@ export class SymptomParserService {
       2. Normalize each symptom to standard medical terminology
       3. Validate if each extracted item is actually a medical symptom
       4. Provide warnings for any non-medical terms or unclear descriptions
+      5. If the input is completely unrelated to health/medical symptoms, provide an appropriate error message
 
       Rules:
       - Only extract actual medical symptoms (pain, fever, nausea, etc.)
@@ -42,20 +45,24 @@ export class SymptomParserService {
       - Convert colloquial terms to medical terms (e.g., "tummy ache" → "abdominal pain")
       - Separate compound symptoms (e.g., "headache and nausea" → ["headache", "nausea"])
       - If no valid symptoms are found, mark as invalid
+      - If input is completely unrelated to health (e.g., about cars, weather, food recipes), include an error message
 
       Return your response as a JSON object with this exact structure:
       {
         "symptoms": ["symptom1", "symptom2", "symptom3"],
         "isValid": true/false,
         "warnings": ["warning1", "warning2"],
-        "confidence": 0.0-1.0
+        "confidence": 0.0-1.0,
+        "error": "error message if input is completely unrelated to health"
       }
 
       Examples:
       - "I have a headache and vomit" → {"symptoms": ["headache", "vomiting"], "isValid": true, "warnings": [], "confidence": 0.95}
       - "headache, vomit, fever" → {"symptoms": ["headache", "vomiting", "fever"], "isValid": true, "warnings": [], "confidence": 0.98}
       - "I feel bad today" → {"symptoms": [], "isValid": false, "warnings": ["'feel bad' is too vague - please describe specific symptoms"], "confidence": 0.2}
-      - "my car is broken" → {"symptoms": [], "isValid": false, "warnings": ["Input does not contain medical symptoms"], "confidence": 0.1}
+      - "my car is broken" → {"symptoms": [], "isValid": false, "warnings": [], "confidence": 0.1, "error": "This input appears to be about car problems, not health symptoms. Please describe any physical symptoms you're experiencing."}
+      - "what's the weather like" → {"symptoms": [], "isValid": false, "warnings": [], "confidence": 0.1, "error": "This input is about weather, not health symptoms. Please describe any physical symptoms you're experiencing."}
+      - "how to cook pasta" → {"symptoms": [], "isValid": false, "warnings": [], "confidence": 0.1, "error": "This input is about cooking, not health symptoms. Please describe any physical symptoms you're experiencing."}
 
       Only return the JSON object, no additional text.
       `;
@@ -75,7 +82,8 @@ export class SymptomParserService {
             symptoms: parsed.symptoms || [],
             isValid: parsed.isValid || false,
             warnings: parsed.warnings || [],
-            originalInput: input
+            originalInput: input,
+            error: parsed.error
           };
         } else {
           throw new Error('No JSON found in Gemini response');
@@ -120,7 +128,20 @@ export class SymptomParserService {
     const uniqueSymptoms = [...new Set(foundSymptoms)];
 
     if (uniqueSymptoms.length === 0) {
-      warnings.push('No recognizable symptoms found. Please describe specific symptoms like headache, fever, nausea, etc.');
+      const healthRelatedKeywords = ['feel', 'pain', 'hurt', 'sick', 'ill', 'symptom', 'health', 'medical', 'doctor', 'body', 'ache'];
+      const hasHealthKeywords = healthRelatedKeywords.some(keyword => inputLower.includes(keyword));
+      
+      if (!hasHealthKeywords) {
+        return {
+          symptoms: [],
+          isValid: false,
+          warnings: [],
+          originalInput: input,
+          error: 'This input does not appear to be related to health symptoms. Please describe any physical symptoms you are experiencing.'
+        };
+      } else {
+        warnings.push('No recognizable symptoms found. Please describe specific symptoms like headache, fever, nausea, etc.');
+      }
     }
 
     return {
