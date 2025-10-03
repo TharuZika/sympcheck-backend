@@ -170,8 +170,6 @@ export class SymptomsService {
     age?: string
   ): Promise<MedicalAdvice> {
     try {
-      const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      
       const ageInfo = age ? `Patient Age: ${age} years old` : 'Age not provided';
       
       const prompt = `
@@ -205,9 +203,36 @@ export class SymptomsService {
       Only return the JSON object, no additional text.
       `;
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error('GEMINI_API_KEY environment variable is not set');
+      }
+      
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
+          },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{
+                text: prompt
+              }]
+            }]
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Gemini API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`);
+      }
+
+      const data = await response.json();
+      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
       
       console.log(`Gemini response for ${disease}:`, text);
       
