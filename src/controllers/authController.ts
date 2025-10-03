@@ -225,7 +225,7 @@ export class AuthController {
       
       if (newWeight && newHeight) {
         const weightKg = newWeight;
-        const heightM = newHeight / 100; // cm to m
+        const heightM = newHeight / 100; 
         bmi = weightKg / (heightM * heightM);
       }
 
